@@ -14,6 +14,12 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
 ]
+mcp-demo = [
+    "mcp[cli]>=1.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+]
 
 [project.scripts]
 mcp-agent-router = "mcp_agent_router.cli:main"

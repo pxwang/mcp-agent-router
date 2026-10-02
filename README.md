@@ -105,6 +105,39 @@ triggered the expected tool(s) - currently 7/7. This calls the Anthropic API onc
 case, so it's a manual check, not wired into CI or any pre-commit/pre-push hook - running
 it on every check-in would add API cost for no benefit at this project's size.
 
+## MCP example: wrapping an existing REST service
+
+A self-contained simulation of step 2 of the build plan: a team already has a REST API
+(`services/policy_service.py` - plain FastAPI, no AI involved), and `mcp_servers/policy_mcp_server.py`
+is a thin MCP server bolted on top of it, unmodified - each tool call is just an HTTP
+request to one existing endpoint. `mcp_servers/demo_client.py` is a plain MCP client (no
+Claude, no LLM) that discovers and calls the tool, proving the loop works on its own -
+this is exactly what an LLM's tool-calling runtime does under the hood.
+
+```bash
+pip install -e ".[mcp-demo]"
+
+# terminal 1
+uvicorn services.policy_service:app --port 8800
+
+# terminal 2
+python mcp_servers/policy_mcp_server.py
+
+# terminal 3
+python mcp_servers/demo_client.py
+```
+
+```
+Discovered tools: ['get_policy_status']
+get_policy_status(P-1234) -> [TextContent(..., text='{\n  "policy_id": "P-1234",\n  "status": "active", ...}')]
+get_policy_status(P-0000) -> [TextContent(..., text='{\n  "error": "Policy P-0000 not found"\n}')]
+```
+
+This is separate from the running chat agent above - `agent.py` still calls `get_policy_status`
+locally via `tools.py`/`executors.py`. Wiring the agent itself to call this MCP server instead
+(making it an MCP client, alongside the other two tools staying local) is the natural next step,
+not yet done here.
+
 ## Layout
 
 ```
@@ -120,6 +153,11 @@ src/mcp_agent_router/
 evals/
   routing_evals.jsonl      # utterance -> expected tool(s)
   run_routing_evals.py     # replays each case through the agent, reports pass/fail
+services/
+  policy_service.py        # plain REST API - the "existing" system, no AI
+mcp_servers/
+  policy_mcp_server.py      # MCP server wrapping policy_service.py
+  demo_client.py             # plain MCP client proving the loop end-to-end
 ```
 
 ## Future thoughts: scaling past a handful of tools
