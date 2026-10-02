@@ -66,6 +66,17 @@ you> exit
 
 This is a real, unedited session. A few things worth noticing: the agent handles a casual phrasing and a typo without trouble, and when asked to book an appointment it holds off on calling `schedule_appointment` until it has a valid date, time, and topic - it even catches an ambiguous/implausible year ("2016" isn't a Tuesday) rather than silently booking the wrong date. That clarify-before-acting behavior comes from the system prompt's guardrail ("never guess personal data... ask a clarifying question"), not from any special-casing in the tool itself.
 
+(Note: the agent writes markdown - `**bold**`, bullets - which the terminal above shows as raw asterisks. The Streamlit UI below renders it properly.)
+
+## UI
+
+A simple Streamlit chat interface, same agent and tools, with markdown rendering and a
+sidebar showing the tool registry and recent audit log entries:
+
+```bash
+streamlit run app.py
+```
+
 ## Test
 
 ```bash
@@ -77,12 +88,14 @@ Tests cover the tool executors and the registry; they don't call the Anthropic A
 ## Layout
 
 ```
+app.py                     # Streamlit chat UI
 src/mcp_agent_router/
   config/tools.yaml   # tool registry: name, description, domain, owner, schema, permissions
   db.py               # SQLite mock data (policies, appointments, faq_entries)
   executors.py        # tool implementations
   tools.py            # loads tools.yaml -> LLM tool list + executor dispatch
   agent.py            # tool-calling loop (Anthropic Messages API)
+  audit.py            # per-call audit log (query, tool, latency, outcome)
   cli.py              # interactive REPL
 evals/routing_evals.jsonl  # utterance -> expected tool(s), for routing evals (step 5)
 ```
