@@ -77,6 +77,8 @@ sidebar showing the tool registry and recent audit log entries:
 streamlit run app.py
 ```
 
+![mcp-agent-router Streamlit UI showing a policy lookup routed to get_policy_status, then an appointment booking routed to schedule_appointment, with the sidebar's recent tool calls](docs/screenshot.png)
+
 ## Test
 
 ```bash
