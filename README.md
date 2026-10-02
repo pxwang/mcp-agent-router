@@ -41,9 +41,30 @@ mcp-agent-router
 ```
 
 ```
-you> What's the status of policy P-1234?
-agent> Policy P-1234 is active, with a $142.50 monthly premium, renewing 2027-01-01.
+% mcp-agent-router
+mcp-agent-router (type 'exit' to quit)
+you> what is status policy P-1234
+agent> Here's the status for policy **P-1234**:
+
+- **Status:** Active
+- **Monthly premium:** $142.50
+- **Renewal date:** January 1, 2027
+
+Let me know if you need anything else!
+you> Can I book a call next Tuesday at 2pm?
+agent> I'd be happy to help! Could you confirm the exact date for "next Tuesday" (in YYYY-MM-DD format)? Also, just to confirm — 2pm would be 14:00. What topic should I note for the call?
+you> 2016-10-6 at 14:00
+agent> Just to double check — 2016-10-06 would be a date in the past (and it falls on a Thursday, not a Tuesday). Did you mean **2026-10-06**? Please confirm the correct year, and let me know what topic the call should cover.
+you> oh 2026-10-06 at 14:00
+agent> Got it! Just need one more thing — what topic should I note for this call (e.g., billing question, claims, policy review)?
+you> policy review
+agent> Your call is booked for **October 6, 2026 at 2:00 PM** to discuss a **policy review**. You'll hear from an agent then — let me know if you need anything else!
+you> What's aduductible?
+agent> A **deductible** is the amount you pay out of pocket on a claim before your insurance coverage kicks in to pay the rest. Let me know if you'd like more details!
+you> exit
 ```
+
+This is a real, unedited session. A few things worth noticing: the agent handles a casual phrasing and a typo without trouble, and when asked to book an appointment it holds off on calling `schedule_appointment` until it has a valid date, time, and topic - it even catches an ambiguous/implausible year ("2016" isn't a Tuesday) rather than silently booking the wrong date. That clarify-before-acting behavior comes from the system prompt's guardrail ("never guess personal data... ask a clarifying question"), not from any special-casing in the tool itself.
 
 ## Test
 
