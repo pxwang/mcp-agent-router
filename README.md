@@ -9,6 +9,22 @@ An AI chat agent that routes requests to domain services via LLM tool calling, M
 Tools are defined in a config-driven registry (`src/mcp_agent_router/config/tools.yaml`)
 rather than hardcoded, so the next step (moving them behind MCP servers) is a drop-in change.
 
+```mermaid
+flowchart TD
+    U[User query] --> LLM["LLM - Claude Sonnet 5<br/>sees the full tool list, every request"]
+    LLM --> REG["Tool registry (tools.yaml)"]
+    REG --> P[Policy service]
+    REG --> S[Scheduling service]
+    REG --> F[Content / FAQ service]
+    P --> R[Response to user]
+    S --> R
+    F --> R
+    REG -.-> AUDIT[Audit log]
+```
+
+All three are real services conceptually; today's POC mocks all three behind one SQLite file
+for development convenience, not as the intended production design.
+
 ## Setup
 
 ```bash
@@ -49,3 +65,54 @@ src/mcp_agent_router/
   cli.py              # interactive REPL
 evals/routing_evals.jsonl  # utterance -> expected tool(s), for routing evals (step 5)
 ```
+
+## Future thoughts: scaling past a handful of tools
+
+The current design - one LLM call sees the full tool list - is simple, cheap, and the right
+fit under roughly 10-15 tools. Past that point, prompt bloat starts raising cost and latency
+and lowering routing precision. A few options, roughly in order of effort, for if/when that
+threshold is crossed:
+
+- **Group tools by domain.** Split the flat list into domain buckets (policy, billing,
+  scheduling, ...) and have the LLM pick a domain first, then see only that domain's tools.
+  No new infrastructure, just a restructured registry and prompt.
+- **Add a fast classifier in front, with a confidence fallback.** A cheap keyword or
+  embedding-based classifier narrows the domain before the LLM runs; below a confidence
+  threshold, ask a clarifying question instead of guessing.
+- **A full layered gateway**, once the tool count genuinely grows large: a vector search over
+  tool descriptions shortlists the 3-5 most relevant tools, a small/fast model picks among
+  them, and only then does the frontier-model orchestrator see any tool schema - keeping its
+  prompt small no matter how many services exist. An MCP driver dispatches the resulting call
+  to the right service(s), in parallel when a request needs more than one.
+
+```mermaid
+flowchart TD
+    U[User query] --> GW["API Gateway<br/>auth, rate limits, audit log"]
+    GW --> IR["Intent Router<br/>fast model + vector search over tool descriptions"]
+    IR --> OR["Orchestrator<br/>frontier LLM - only sees the shortlisted tools"]
+    OR --> MCP["MCP Driver"]
+    MCP --> S1[Policy service]
+    MCP --> S2[Scheduling service]
+    MCP --> S3[Billing / CRM service]
+    MCP --> S4[...more services]
+```
+
+**The orchestrator isn't a new component - it's today's POC, fed a shorter list.** The intent
+router only classifies: which domain, or which 3-5 tools are plausible candidates. It never
+decides, extracts a parameter, or writes a response. The orchestrator is where the actual
+decision happens, and it's the same mechanism as the current `agent.py` loop - same model
+(Claude Sonnet 5), same tool-calling code path. The only thing that changes is which list of
+tools it's handed: today, every tool; under this design, whatever the router shortlisted for
+that request. `agent.py` doesn't need to change to adopt this - it already takes a list of
+tools as input and doesn't care how that list was produced. All the new engineering is in the
+router sitting in front of it, not in rebuilding the part that already works.
+
+Other things worth keeping in mind as this grows:
+
+- Keep tool schemas in a provider-agnostic registry (`tools.yaml` already does this) so the
+  orchestrator model, or even its cloud provider, can be swapped without rewriting routing logic.
+- Evaluate existing MCP/LLM gateway products before building a custom layered gateway -
+  build only what doesn't already exist in a form that fits.
+- Gate any routing change behind the routing-eval set (accuracy, latency) against the current
+  baseline before rolling it out further - this architecture should be adopted once the
+  evidence says it's needed, not ahead of it.
