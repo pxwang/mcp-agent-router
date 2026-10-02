@@ -1,0 +1,69 @@
+# Stage 1 tool registry: config-driven, one entry per capability.
+# Descriptions are the routing logic the LLM uses to pick a tool - review them like code.
+tools:
+  - name: get_policy_status
+    description: >
+      Look up an insurance policy's status, monthly premium, and renewal date.
+      Use when the customer asks about their own policy, bill amount, or renewal date.
+      Requires a policy ID. Do NOT use for filing claims or general coverage questions.
+    domain: policy
+    owner: policy-team
+    side_effects: read_only
+    timeout_s: 5
+    version: 1
+    enabled: true
+    input_schema:
+      type: object
+      properties:
+        policy_id:
+          type: string
+          description: "The policy ID, e.g. P-1234"
+      required: [policy_id]
+
+  - name: schedule_appointment
+    description: >
+      Book a call with a licensed agent for a given date and time.
+      Use when the customer wants to speak to a human agent, schedule a callback,
+      or needs something this assistant cannot resolve directly. Dates must be in
+      YYYY-MM-DD format and times in HH:MM 24-hour format. If either is missing or
+      ambiguous, do not guess. For example, ask whether "10/5" means October 5
+      or May 10, then give the customer the expected format: 2026-10-05 at 14:30.
+    domain: scheduling
+    owner: scheduling-team
+    side_effects: write
+    timeout_s: 5
+    version: 1
+    enabled: true
+    input_schema:
+      type: object
+      properties:
+        date:
+          type: string
+          description: "Date in YYYY-MM-DD format"
+        time:
+          type: string
+          description: "Time in HH:MM 24h format"
+        topic:
+          type: string
+          description: "Short reason for the appointment"
+          default: general
+      required: [date, time]
+
+  - name: search_faq
+    description: >
+      Search FAQ and policy documents for an answer to a general question about
+      coverage, billing, deductibles, or how to file a claim. Use for questions
+      that are not specific to the customer's own policy number.
+    domain: faq
+    owner: content-team
+    side_effects: read_only
+    timeout_s: 5
+    version: 1
+    enabled: true
+    input_schema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "The customer's question, in their own words"
+      required: [query]

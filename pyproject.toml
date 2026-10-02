@@ -1,0 +1,24 @@
+[project]
+name = "mcp-agent-router"
+version = "0.1.0"
+description = "AI chat agent with LLM tool-calling routing, MCP tools, and RAG"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+mcp-agent-router = "mcp_agent_router.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
