@@ -33,6 +33,12 @@ pip install -e ".[dev]"
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+Each new terminal session needs `source .venv/bin/activate` again before running anything below -
+otherwise `streamlit`, `pytest`, etc. may resolve to a different Python (e.g. Anaconda's) that
+doesn't have this project installed, and you'll see `ModuleNotFoundError: No module named
+'mcp_agent_router'`. If that happens, either activate the venv or call its binaries directly
+(`.venv/bin/streamlit`, `.venv/bin/pytest`, ...).
+
 ## Run
 
 ```bash
@@ -75,6 +81,7 @@ sidebar showing the tool registry and recent audit log entries:
 
 ```bash
 streamlit run app.py
+# or, without activating the venv: .venv/bin/streamlit run app.py
 ```
 
 ![mcp-agent-router Streamlit UI showing a policy lookup routed to get_policy_status, then an appointment booking routed to schedule_appointment, with the sidebar's recent tool calls](docs/screenshot.png)
