@@ -2,10 +2,13 @@
 
 import sys
 
+from dotenv import load_dotenv
+
 from mcp_agent_router.agent import Agent
 
 
 def main() -> None:
+    load_dotenv()
     agent = Agent()
     print("mcp-agent-router (type 'exit' to quit)")
     while True:

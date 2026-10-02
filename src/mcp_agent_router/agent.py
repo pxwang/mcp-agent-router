@@ -9,7 +9,6 @@ import anthropic
 from mcp_agent_router.audit import log_tool_call
 from mcp_agent_router.tools import ToolRegistry
 
-DEFAULT_MODEL = os.environ.get("MCP_AGENT_ROUTER_MODEL", "claude-sonnet-5")
 MAX_TOOL_ROUNDS = 5
 
 SYSTEM_PROMPT = """You are a support assistant for a mock insurance company.
@@ -19,9 +18,9 @@ never guess personal data. Keep answers short and in plain language."""
 
 
 class Agent:
-    def __init__(self, model: str = DEFAULT_MODEL, registry: ToolRegistry | None = None):
+    def __init__(self, model: str | None = None, registry: ToolRegistry | None = None):
         self.client = anthropic.Anthropic()
-        self.model = model
+        self.model = model or os.environ.get("MCP_AGENT_ROUTER_MODEL", "claude-sonnet-5")
         self.registry = registry or ToolRegistry()
         self.messages: list[dict] = []
 
