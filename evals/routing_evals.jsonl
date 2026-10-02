@@ -1,7 +1,7 @@
 {"utterance": "What's the status of policy P-1234?", "expected_tools": ["get_policy_status"]}
-{"utterance": "Can I book a call with an agent next Tuesday at 2pm?", "expected_tools": ["schedule_appointment"]}
+{"utterance": "Can I book a call with an agent on 2026-10-06 at 14:00?", "expected_tools": ["schedule_appointment"]}
 {"utterance": "What's a deductible?", "expected_tools": ["search_faq"]}
 {"utterance": "How do I file a claim?", "expected_tools": ["search_faq"]}
 {"utterance": "When does my policy P-9999 renew and what do I owe monthly?", "expected_tools": ["get_policy_status"]}
-{"utterance": "I want to talk to a human about my lapsed policy P-5678", "expected_tools": ["get_policy_status", "schedule_appointment"]}
+{"utterance": "I want to talk to a human about my lapsed policy P-5678, on 2026-10-06 at 14:00", "expected_tools": ["get_policy_status", "schedule_appointment"]}
 {"utterance": "What does comprehensive coverage cover?", "expected_tools": ["search_faq"]}

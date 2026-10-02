@@ -87,6 +87,17 @@ pytest
 
 Tests cover the tool executors and the registry; they don't call the Anthropic API.
 
+## Routing evals
+
+```bash
+python evals/run_routing_evals.py
+```
+
+Replays `evals/routing_evals.jsonl` through the agent and checks whether each utterance
+triggered the expected tool(s) - currently 7/7. This calls the Anthropic API once per
+case, so it's a manual check, not wired into CI or any pre-commit/pre-push hook - running
+it on every check-in would add API cost for no benefit at this project's size.
+
 ## Layout
 
 ```
@@ -99,7 +110,9 @@ src/mcp_agent_router/
   agent.py            # tool-calling loop (Anthropic Messages API)
   audit.py            # per-call audit log (query, tool, latency, outcome)
   cli.py              # interactive REPL
-evals/routing_evals.jsonl  # utterance -> expected tool(s), for routing evals (step 5)
+evals/
+  routing_evals.jsonl      # utterance -> expected tool(s)
+  run_routing_evals.py     # replays each case through the agent, reports pass/fail
 ```
 
 ## Future thoughts: scaling past a handful of tools
