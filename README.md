@@ -1,3 +1,5 @@
+<img src="docs/social-preview.png" width="640" alt="Route the call — mcp-agent-router, a robot's hand on a railroad switch lever, choosing between two forking tracks">
+
 # mcp-agent-router
 
 An AI chat agent that routes requests to domain services via LLM tool calling, MCP servers, and RAG. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the full design and build plan.
