@@ -133,10 +133,28 @@ get_policy_status(P-1234) -> [TextContent(..., text='{\n  "policy_id": "P-1234",
 get_policy_status(P-0000) -> [TextContent(..., text='{\n  "error": "Policy P-0000 not found"\n}')]
 ```
 
-This is separate from the running chat agent above - `agent.py` still calls `get_policy_status`
-locally via `tools.py`/`executors.py`. Wiring the agent itself to call this MCP server instead
-(making it an MCP client, alongside the other two tools staying local) is the natural next step,
-not yet done here.
+### Wiring it into the live agent
+
+`demo_client.py` above is a standalone proof that the MCP loop works - the chat agent itself
+still calls `get_policy_status` locally via `tools.py`/`executors.py` by default, and the full
+test suite, CLI, and Streamlit UI all run with zero extra servers, exactly as before.
+
+`get_policy_status` can be switched to the real MCP server instead, opt-in, by setting one
+env var - `schedule_appointment` and `search_faq` stay local either way:
+
+```bash
+# with both servers above still running
+MCP_AGENT_ROUTER_POLICY_BACKEND=mcp mcp-agent-router
+```
+
+`ToolRegistry.call()` (`tools.py`) checks that flag only for `get_policy_status` and, when set,
+calls `mcp_client.py`'s sync wrapper around a real MCP `ClientSession` instead of the local
+SQLite-backed function - everything upstream (the orchestrator loop, the audit log, the tool's
+name/description/schema shown to Claude) is unchanged, because from the agent's point of view
+it's still just "a tool that returns a dict." If the MCP server isn't reachable, it returns
+`{"error": "..."}` rather than crashing. The `mcp` package itself is only imported when this
+path actually runs, so it stays an optional dependency (`pip install -e ".[mcp-demo]"`) rather
+than a requirement for the default local-only setup.
 
 ## Layout
 
@@ -147,6 +165,7 @@ src/mcp_agent_router/
   db.py               # SQLite mock data (policies, appointments, faq_entries)
   executors.py        # tool implementations
   tools.py            # loads tools.yaml -> LLM tool list + executor dispatch
+  mcp_client.py        # opt-in: sync wrapper to call get_policy_status over real MCP
   agent.py            # tool-calling loop (Anthropic Messages API)
   audit.py            # per-call audit log (query, tool, latency, outcome)
   cli.py              # interactive REPL

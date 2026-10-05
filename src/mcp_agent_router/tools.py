@@ -9,8 +9,15 @@ import os
 import yaml
 
 from mcp_agent_router.executors import EXECUTORS
+from mcp_agent_router.mcp_client import call_policy_mcp_tool
 
 _CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config", "tools.yaml")
+
+# Opt-in: when set to "mcp", get_policy_status is served by the real MCP
+# server (mcp_servers/policy_mcp_server.py) wrapping services/policy_service.py,
+# instead of the local SQLite-backed executor. Every other tool, and the
+# default, is unaffected - see README.md "MCP example".
+_POLICY_BACKEND = os.environ.get("MCP_AGENT_ROUTER_POLICY_BACKEND", "local")
 
 
 class ToolRegistry:
@@ -40,4 +47,6 @@ class ToolRegistry:
     def call(self, name: str, arguments: dict) -> dict:
         if name not in self._specs:
             return {"error": f"Unknown or disabled tool '{name}'"}
+        if name == "get_policy_status" and _POLICY_BACKEND == "mcp":
+            return call_policy_mcp_tool(**arguments)
         return EXECUTORS[name](**arguments)
